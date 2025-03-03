@@ -32,7 +32,7 @@ export async function createSubscription(email: string) {
     }
 
     // Get host for success and cancel URLs
-    const host = headers().get("host") || "localhost:3000"
+    const host = (await headers()).get("host") || "localhost:3000"
     const protocol = process.env.NODE_ENV === "production" ? "https" : "http"
 
     // Create Stripe checkout session

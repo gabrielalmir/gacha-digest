@@ -1,43 +1,48 @@
-import { createClient } from "@supabase/supabase-js"
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import Stripe from "stripe"
+import { createClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import Stripe from "stripe";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { use } from "react";
 
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+interface SuccessPageParams {
+  searchParams: Promise<{
+    session_id?: string;
+  }>;
+}
 
 export default async function SuccessPage({
   searchParams,
-}: {
-  searchParams: { session_id?: string }
-}) {
-  const sessionId = searchParams.session_id
+}: Readonly<SuccessPageParams>) {
+  const sessionId = use(searchParams).session_id;
 
   if (!sessionId) {
-    redirect("/")
+    redirect("/");
   }
 
   try {
     // Retrieve the checkout session to get customer information
-    const session = await stripe.checkout.sessions.retrieve(sessionId)
-    const email = session.customer_email || session.metadata?.email
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const email = session.customer_email || session.metadata?.email;
 
     if (email) {
       // Update subscriber status in database
       await supabase
         .from("subscribers")
         .update({ active: true, stripe_customer_id: session.customer })
-        .eq("email", email)
+        .eq("email", email);
     }
   } catch (error) {
-    console.error("Error processing successful subscription:", error)
+    console.error("Error processing successful subscription:", error);
   }
 
   return (
@@ -62,8 +67,8 @@ export default async function SuccessPage({
           </div>
           <h1 className="text-3xl font-bold">Subscription Successful!</h1>
           <p className="text-gray-500 dark:text-gray-400">
-            Thank you for subscribing to Gacha Digest. You will start receiving our weekly newsletter with exclusive
-            Zenless Zone Zero content.
+            Thank you for subscribing to Gacha Digest. You will start receiving
+            our weekly newsletter with exclusive Zenless Zone Zero content.
           </p>
           <div className="bg-gray-50 p-4 rounded-lg dark:bg-gray-800">
             <h2 className="font-medium mb-2">What's Next?</h2>
@@ -100,7 +105,9 @@ export default async function SuccessPage({
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                <span>Your first newsletter will arrive within the next week</span>
+                <span>
+                  Your first newsletter will arrive within the next week
+                </span>
               </li>
               <li className="flex items-start">
                 <svg
@@ -117,7 +124,10 @@ export default async function SuccessPage({
                 >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                <span>Add our email to your contacts to ensure you receive all newsletters</span>
+                <span>
+                  Add our email to your contacts to ensure you receive all
+                  newsletters
+                </span>
               </li>
             </ul>
           </div>
@@ -134,6 +144,5 @@ export default async function SuccessPage({
         </div>
       </footer>
     </div>
-  )
+  );
 }
-
