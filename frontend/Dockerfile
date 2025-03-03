@@ -55,11 +55,14 @@ FROM base AS final
 # Use production node environment by default.
 ENV NODE_ENV production
 
-# Run the application as a non-root user.
-USER node
-
 # Copy package.json so that package manager commands can be used.
 COPY package.json .
+
+# Change ownership of the application directory to the non-root user.
+RUN chown -R node:node /usr/src/app
+
+# Run the application as a non-root user.
+USER node
 
 # Copy the production dependencies from the deps stage and also
 # the built application from the build stage into the image.
